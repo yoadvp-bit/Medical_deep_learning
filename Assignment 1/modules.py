@@ -61,14 +61,10 @@ class LinearModule(object):
 
         self.x = x
 
-        out = self.bias + np.sum(self.weights*self.x, axis = 1)
-
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
-        #hint: use the np.einsum function to deal with dimensions. I.e. np.einsum('ab,ac-->bc',A,B)  multiplies A (a by b shape) with B (b by c shape) such that it ends up with a matrix shaped b by c
-
+       #hint: use the np.einsum function to deal with dimensions. I.e. np.einsum('ab,ac-->bc',A,B)  multiplies A (a by b shape) with B (b by c shape) such that it ends up with a matrix shaped b by c
         #######################
         # END OF YOUR CODE    #
         #######################
@@ -89,7 +85,6 @@ class LinearModule(object):
         #######################
         # PUT YOUR CODE HERE  #
         #######################
-
 
         #######################
         # END OF YOUR CODE    #
