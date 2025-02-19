@@ -20,10 +20,10 @@ This module implements various modules of the network.
 You should fill in code into indicated sections.
 
 """
-import numpy as np
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import numpy as np
 
 
 
@@ -60,6 +60,8 @@ class LinearModule(object):
         """
 
         self.x = x
+
+        out = self.bias + np.sum(self.weights*self.x, axis = 1)
 
         #######################
         # PUT YOUR CODE HERE  #
