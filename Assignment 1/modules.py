@@ -47,6 +47,7 @@ class LinearModule(object):
         self.weights = np.random.randn(in_features, out_features)/(in_features+out_features)
         self.bias = np.zeros([out_features,1])
         self.grads = {'bias': np.zeros(in_features), 'weight': np.zeros(np.shape(self.weights))}
+        self.last_change = {'bias': np.zeros([out_features,1]), 'weight': np.zeros(np.shape(self.weights))}
 
     def forward(self, x):
         """
@@ -62,7 +63,7 @@ class LinearModule(object):
         self.x = x
 
         #######################
-        out = np.einsum('ab,bc->ac', x, self.weights) + self.bias.T
+        out = np.einsum('bi,io->bo', x, self.weights) + self.bias.T #b is length of batch, i is length of inputs, o is number of outputs, we sum over the number of inputs
         #######################
        #hint: use the np.einsum function to deal with dimensions. I.e. np.einsum('ab,ac-->bc',A,B)  multiplies A (a by b shape) with B (b by c shape) such that it ends up with a matrix shaped b by c
         #######################
