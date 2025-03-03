@@ -22,6 +22,12 @@ class SimpleConvNet(pl.LightningModule):
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+        
+            # conv block 3
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
             nn.MaxPool2d(2, 2))
 
         self.classifier = nn.Sequential(
@@ -43,42 +49,70 @@ class SimpleConvNet(pl.LightningModule):
 
 
 class UNet(pl.LightningModule):
-  def __init__(self, n_classes=1, in_ch=3):
-      super().__init__()
-      #######################
-      # Start YOUR CODE    #
-      #######################
-      # number of filter's list for each expanding and respecting contracting layer
-      c = [16, 32, 64, 128]
+    def __init__(self, n_classes=1, in_ch=3):
+        super().__init__()
+        #######################
+        # Start YOUR CODE    #
+        #######################
+        # number of filter's list for each expanding and respecting contracting layer
+        c = [16, 32, 64, 128]
 
-      # first convolution layer receiving the image
-      # encoder layers
 
-      # decoder layers
+        self.layers = nn.Sequential(
+            # first convolution layer receiving the image
+            nn.Conv2d(in_channels=in_ch, out_channels=c[0], kernel_size=3, padding=1),
+            nn.ReLU(),
+            # encoder layers
+            nn.Conv2d(in_channels=c[0], out_channels=c[1], kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=c[1], out_channels=c[1], kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(in_channels=c[1], out_channels=c[2], kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=c[2], out_channels=c[2], kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(in_channels=c[2], out_channels=c[3], kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=c[3], out_channels=c[3], kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            # decoder layers
+            nn.Conv2d(in_channels=c[3], out_channels=c[2], kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=c[2], out_channels=c[2], kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='bilinear'),
+            nn.Conv2d(in_channels=c[2], out_channels=c[1], kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=c[1], out_channels=c[1], kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='bilinear'),
+            nn.Conv2d(in_channels=c[1], out_channels=c[0], kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=c[0], out_channels=c[0], kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Upsample(scale_factor=2, mode='bilinear'),
+            # last layer returning the output
+            nn.Conv2d(in_channels=c[0], out_channels=n_classes, kernel_size=1)
+            )
+        #######################
+        # END OF YOUR CODE    #
+        #######################
+    def forward(self,x):
+        #######################
+        # Start YOUR CODE    #
+        #######################
+        # encoder
+        # decoder
+        x = self.layers(x)    
 
-      # last layer returning the output
-      #######################
-      # END OF YOUR CODE    #
-      #######################
-  def forward(self,x):
-      #######################
-      # Start YOUR CODE    #
-      #######################
-      # encoder
-
-      # decoder
-
-      #######################
-      # END OF YOUR CODE    #
-      #######################
-      return x
+        #######################
+        # END OF YOUR CODE    #
+        #######################
+        return x
 
 
 def conv3x3_bn(ci, co):
     #######################
     # Start YOUR CODE    #
     #######################
-    pass
+    return nn.Conv2d(in_channels=ci, out_channels=co, kernel_size=3, padding=1),
     #######################
     # end YOUR CODE    #
     #######################

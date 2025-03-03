@@ -17,4 +17,4 @@ cd $HOME/AI_for_medical_imaging_course/Assignment\ 2
 # Activate your environment
 source /gpfs/work5/0/prjs1312/venv/bin/activate
 # Run your code
-srun python -u main_CNN.py
+srun python -u main_CNN.py --checkpoint_folder_save checkpoints/

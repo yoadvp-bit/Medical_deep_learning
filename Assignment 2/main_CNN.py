@@ -190,7 +190,7 @@ if __name__ == '__main__':
                         help='name of experiment')
     parser.add_argument('--checkpoint_folder_path', default=False, type=str,
                         help='path of experiment to load')
-    parser.add_argument('--checkpoint_folder_save', default=None, type=str,
+    parser.add_argument('--checkpoint_folder_save', default="checkpoints/", type=str,
                         help='path of experiment')
     args = parser.parse_args()
     config = vars(args)
