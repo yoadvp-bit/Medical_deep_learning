@@ -190,8 +190,11 @@ if __name__ == '__main__':
                         help='defines model to use')
     parser.add_argument('--optimizer_name', default='sgd', type=str,
                         help='optimizer options: adam and sgd (default)')
-    parser.add_argument('--Conv_Channels', default=[16,32], type=list,
-                        help='Convolutional channels for first and second layer: [first layer, second layer]')
+    def parse_conv_channels(channels):
+        return [int(x) for x in channels.split(',')]
+    
+    parser.add_argument('--Conv_Channels', default='16,32', type=parse_conv_channels,
+                        help='Convolutional channels for first and second layer: comma-separated integers, e.g., "16,32"')
     parser.add_argument('--dropout_rate', default=0, type=float,
                         help='dropout rate')
     # Other hyperparameters
