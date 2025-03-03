@@ -7,6 +7,7 @@ from scipy.ndimage import rotate
 from torch.utils.data import DataLoader, Dataset
 import pytorch_lightning as pl
 from torchvision import transforms
+from PIL import Image
 
 
 # Data loader

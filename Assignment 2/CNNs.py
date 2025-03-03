@@ -22,7 +22,11 @@ class SimpleConvNet(pl.LightningModule):
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2))
+            nn.MaxPool2d(2, 2),
+            
+            # dropout
+            nn.Dropout(0.5)
+        )
 
         self.classifier = nn.Sequential(
             # linear layers

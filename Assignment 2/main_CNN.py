@@ -58,8 +58,15 @@ index = 0
 # study the effect of augmentation here!
 dataset = Scan_Dataset(os.path.join(data_dir, nn_set))
 show_data(dataset,index,n_images_display=5)
-train_transforms = transforms.Compose([Random_Rotate(0.1), transforms.ToTensor()])
-dataset = Scan_Dataset(os.path.join(data_dir, nn_set),transform = train_transforms)
+
+train_transforms = transforms.Compose([
+    Random_Rotate(0.1),
+    # transforms.RandomHorizontalFlip(),
+    # transforms.RandomVerticalFlip(),
+    # transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
+    transforms.ToTensor()
+])
+dataset = Scan_Dataset(os.path.join(data_dir, nn_set), transform=train_transforms)
 show_data(dataset,index,n_images_display=5)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -175,7 +182,7 @@ if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
     # Optimizer hyperparameters
-    parser.add_argument('--optimizer_lr', default=0.1, type=float, nargs='+',
+    parser.add_argument('--optimizer_lr', default=0.1, type=float,
                         help='Learning rate to use')
     parser.add_argument('--batch_size', default=16, type=int,
                         help='Minibatch size')
