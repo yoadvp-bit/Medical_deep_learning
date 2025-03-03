@@ -72,7 +72,7 @@ show_data(dataset,index,n_images_display=5)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.device(device)
 
-models = {'custom_convnet': SimpleConvNet}
+models = {'custom_convnet': lambda: SimpleConvNet(conv_channels=config['Conv_Channels'], dropout_rate=0)}
 
 optimizers = {'adam': torch.optim.Adam,
               'sgd': torch.optim.SGD}
@@ -190,6 +190,10 @@ if __name__ == '__main__':
                         help='defines model to use')
     parser.add_argument('--optimizer_name', default='sgd', type=str,
                         help='optimizer options: adam and sgd (default)')
+    parser.add_argument('--Conv_Channels', default=[16,32], type=list,
+                        help='Convolutional channels for first and second layer: [first layer, second layer]')
+    parser.add_argument('--dropout_rate', default=0, type=float,
+                        help='dropout rate')
     # Other hyperparameters
     parser.add_argument('--max_epochs', default=10, type=int,
                         help='Max number of epochs')
