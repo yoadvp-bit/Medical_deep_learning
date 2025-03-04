@@ -18,12 +18,16 @@ class SimpleConvNet(pl.LightningModule):
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
 
-            # conv block 2
-            nn.Conv2d(in_channels=conv_channels[0], out_channels=conv_channels[1], kernel_size=3, padding=1),
-            nn.BatchNorm2d(conv_channels[1]),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            
+            # conv block 2 to n
+            *[
+                nn.Sequential(
+                    nn.Conv2d(in_channels=conv_channels[i], out_channels=conv_channels[i+1], kernel_size=3, padding=1),
+                    nn.BatchNorm2d(conv_channels[i+1]),
+                    nn.ReLU(),
+                    nn.MaxPool2d(2, 2)
+                ) for i in range(len(conv_channels) - 1)
+            ],
+                
             # dropout
             nn.Dropout(dropout_rate)
         )
@@ -32,7 +36,7 @@ class SimpleConvNet(pl.LightningModule):
             # linear layers
             nn.AdaptiveAvgPool2d(output_size=(4, 4)),
             nn.Flatten(),
-            nn.Linear(in_features=4 * 4 * conv_channels[1], out_features=linear_features[0]),
+            nn.Linear(in_features=4 * 4 * conv_channels[-1], out_features=linear_features[0]),
             nn.ReLU(),
             nn.Linear(in_features=linear_features[0], out_features=num_classes)
         )

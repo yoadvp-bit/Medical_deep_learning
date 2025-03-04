@@ -93,11 +93,16 @@ class Classifier(pl.LightningModule):
         self.model_name = config['model_name']
         assert self.model_name in models, f'Model name "{self.model_name}" is not available. List of available names: {list(models.keys())}'
         self.model = models[self.model_name]().to(device)
-
         # assigning optimizer values
         self.optimizer_name = config['optimizer_name']
         self.lr = config['optimizer_lr']
         self.plot = False
+
+        # additional parameters for Adam optimizer
+        if self.optimizer_name == 'adam':
+            self.beta1 = config.get('beta1', 0.8)
+            self.beta2 = config.get('beta2', 0.999)
+            self.eps = config.get('eps', 1e-8)
 
     def step(self, batch, nn_set):
         X, y = batch
