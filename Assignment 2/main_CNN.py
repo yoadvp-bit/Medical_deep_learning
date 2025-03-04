@@ -182,7 +182,47 @@ def run(config):
     trainer = pl.Trainer()
     trainer.test(model, dataloaders=test_data, verbose=True)
 
+# hyperparameter sets
+learning_rates = [0.0001, 0.001, 0.01]  
+optimizer_set = ['adam']
+batch_set = [16, 32, 64]
+convolutional_channels = [[16, 32], [32, 64], [64, 128]]
 
+def run_experiment(learning_rate, optimizer, batch_size, conv_channels):
+    """Function that runs the training script with specific hyperparameters."""
+    
+    # Create a dictionary simulating parsed arguments
+    config = {
+        'optimizer_lr': learning_rate,
+        'batch_size': batch_size,
+        'model_name': 'custom_convnet',
+        'optimizer_name': optimizer,
+        'Conv_Channels': conv_channels,
+        'dropout_rate': 0.0,
+        'max_epochs': 10,
+        'experiment_name': f"exp_lr{learning_rate}_opt{optimizer}_bs{batch_size}_ch{conv_channels}",
+        'checkpoint_folder_path': False,
+        'checkpoint_folder_save': "checkpoints/"
+    }
+
+    config.update({
+        'train_data_dir': os.path.join(data_dir, 'train'),
+        'val_data_dir': os.path.join(data_dir, 'val'),
+        'test_data_dir': os.path.join(data_dir, 'test'),
+        'bin': 'models/'
+    })
+
+    # Run training with the generated config
+    run(config)
+
+if __name__ == '__main__':
+    for lr in learning_rates:
+        for opt in optimizer_set:
+            for batch in batch_set:
+                for conv_channels in convolutional_channels:
+                    run_experiment(lr, opt, batch, conv_channels)
+
+'''
 if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
@@ -222,3 +262,4 @@ if __name__ == '__main__':
 
     run(config)
     # Feel free to add any additional functions, such as plotting of the loss curve here
+'''
