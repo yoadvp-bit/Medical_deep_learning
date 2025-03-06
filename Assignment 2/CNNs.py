@@ -12,7 +12,9 @@ class SimpleConvNet(pl.LightningModule):
         # PUT YOUR CODE HERE  #
         #######################
 
-        if use_residuals:
+        self.use_residuals = use_residuals
+
+        if self.use_residuals:
             self.block1= nn.Sequential(
                 # conv block 1
                 nn.Conv2d(in_channels=in_channels, out_channels=conv_channels[0], kernel_size=3, padding=1),
