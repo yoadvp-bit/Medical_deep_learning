@@ -231,6 +231,8 @@ convolutional_channels = [[16, 32], [32, 64], [64, 128]]
 def run_experiment(learning_rate, optimizer, batch_size, conv_channels):
     """Function that runs the training script with specific hyperparameters."""
     
+    experiment_name = f"exp_lr{learning_rate}_opt{optimizer}_bs{batch_size}_ch{conv_channels}"
+    
     # Create a dictionary simulating parsed arguments
     config = {
         'optimizer_lr': learning_rate,
@@ -240,9 +242,9 @@ def run_experiment(learning_rate, optimizer, batch_size, conv_channels):
         'Conv_Channels': conv_channels,
         'dropout_rate': 0.0,
         'max_epochs': 10,
-        'experiment_name': f"exp_lr{learning_rate}_opt{optimizer}_bs{batch_size}_ch{conv_channels}",
+        'experiment_name': experiment_name,  # Set unique name
         'checkpoint_folder_path': False,
-        'checkpoint_folder_save': "checkpoints/"
+        'checkpoint_folder_save': f"checkpoints/{experiment_name}/"  # Unique directory
     }
 
     config.update({
@@ -252,7 +254,7 @@ def run_experiment(learning_rate, optimizer, batch_size, conv_channels):
         'bin': 'models/'
     })
 
-    # Run training with the generated config
+    os.makedirs(config['checkpoint_folder_save'], exist_ok=True)
     run(config)
 
 if __name__ == '__main__':
