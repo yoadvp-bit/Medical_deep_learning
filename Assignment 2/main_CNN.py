@@ -30,6 +30,7 @@ from CNNs import SimpleConvNet
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 import wandb
+import time
 
 #start interactieve sessie om wandb.login te runnen
 wandb.login()
@@ -160,6 +161,7 @@ class Classifier(pl.LightningModule):
 
 
 def run(config):
+    print(os.path.join(config['checkpoint_folder_save'], '*'))
     logger = WandbLogger(name=config['experiment_name'], project='ISIC')
     data = Scan_DataModule(config)
     classifier = Classifier(config)
@@ -170,8 +172,16 @@ def run(config):
                          default_root_dir=config['bin'],
                          log_every_n_steps=1)
     trainer.fit(classifier, data)
-    # load best model
-    PATH = glob.glob(os.path.join(config['checkpoint_folder_save'], '*'))[0]
+
+    checkpoint_files = glob.glob(os.path.join(config['checkpoint_folder_save'], '*'))
+    if not checkpoint_files:
+        raise FileNotFoundError(f"No checkpoint files found in directory: {config['checkpoint_folder_save']}")
+
+    checkpoint_files.sort(key=os.path.getmtime, reverse=True)
+    PATH = checkpoint_files[0]
+
+    # load best model   
+    # PATH = glob.glob(os.path.join(config['checkpoint_folder_save'], '*'))[0]
     model = Classifier.load_from_checkpoint(PATH)
     model.eval()
 
@@ -226,15 +236,19 @@ if __name__ == '__main__':
 learning_rates = [0.0001, 0.001, 0.01]  
 optimizer_set = ['adam']
 batch_set = [16, 32, 64]
-convolutional_channels = [[16, 32], [32, 64], [64, 128]]
+convolutional_channels = [[1,2],[16, 32], [32, 64], [64, 128]]
 
 if __name__ == '__main__':
     for learning_rate in learning_rates:
         for optimizer in optimizer_set:
             for batch_size in batch_set:
                 for conv_channels in convolutional_channels:
-                        
-                    experiment_name = f"lr{learning_rate}_{optimizer}_bs{batch_size}_ch{conv_channels}"
+                    # wandb.login(relogin=True)
+
+                    # Replace the decimal point in the learning rate with an underscore
+                    learning_rate_str = str(learning_rate).replace('.', '_')
+
+                    experiment_name = f"lr{learning_rate_str}_{optimizer}_bs{batch_size}_ch{conv_channels}"
                     
                     # Create a dictionary simulating parsed arguments
                     config = {
@@ -244,10 +258,11 @@ if __name__ == '__main__':
                         'optimizer_name': optimizer,
                         'Conv_Channels': conv_channels,
                         'dropout_rate': 0.0,
-                        'max_epochs': 10,
+                        'max_epochs': 4,
                         'experiment_name': experiment_name,  # Set unique name
                         'checkpoint_folder_path': False,
-                        'checkpoint_folder_save': f"checkpoints/{experiment_name}/"  # Unique directory
+                        # 'checkpoint_folder_save': f"checkpoints/{experiment_name}/"  # Unique directory
+                        'checkpoint_folder_save': f"checkpoints/" 
                     }
 
                     config.update({
