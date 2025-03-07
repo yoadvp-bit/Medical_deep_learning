@@ -234,7 +234,7 @@ if __name__ == '__main__':
             for batch_size in batch_set:
                 for conv_channels in convolutional_channels:
                         
-                    experiment_name = f"exp_lr{learning_rate}_opt{optimizer}_bs{batch_size}_ch{conv_channels}"
+                    experiment_name = f"lr{learning_rate}_{optimizer}_bs{batch_size}_ch{conv_channels}"
                     
                     # Create a dictionary simulating parsed arguments
                     config = {
