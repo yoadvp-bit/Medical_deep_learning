@@ -181,7 +181,7 @@ def run(config):
     # test model
     trainer = pl.Trainer()
     trainer.test(model, dataloaders=test_data, verbose=True)
-
+"""
 if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
@@ -221,45 +221,41 @@ if __name__ == '__main__':
 
     run(config)
     # Feel free to add any additional functions, such as plotting of the loss curve here
-
+"""
 # hyperparameter sets
 learning_rates = [0.0001, 0.001, 0.01]  
 optimizer_set = ['adam']
 batch_set = [16, 32, 64]
 convolutional_channels = [[16, 32], [32, 64], [64, 128]]
 
-def run_experiment(learning_rate, optimizer, batch_size, conv_channels):
-    """Function that runs the training script with specific hyperparameters."""
-    
-    experiment_name = f"exp_lr{learning_rate}_opt{optimizer}_bs{batch_size}_ch{conv_channels}"
-    
-    # Create a dictionary simulating parsed arguments
-    config = {
-        'optimizer_lr': learning_rate,
-        'batch_size': batch_size,
-        'model_name': 'custom_convnet',
-        'optimizer_name': optimizer,
-        'Conv_Channels': conv_channels,
-        'dropout_rate': 0.0,
-        'max_epochs': 10,
-        'experiment_name': experiment_name,  # Set unique name
-        'checkpoint_folder_path': False,
-        'checkpoint_folder_save': f"checkpoints/{experiment_name}/"  # Unique directory
-    }
-
-    config.update({
-        'train_data_dir': os.path.join(data_dir, 'train'),
-        'val_data_dir': os.path.join(data_dir, 'val'),
-        'test_data_dir': os.path.join(data_dir, 'test'),
-        'bin': 'models/'
-    })
-
-    os.makedirs(config['checkpoint_folder_save'], exist_ok=True)
-    run(config)
-
 if __name__ == '__main__':
-    for lr in learning_rates:
-        for opt in optimizer_set:
-            for batch in batch_set:
+    for learning_rate in learning_rates:
+        for optimizer in optimizer_set:
+            for batch_size in batch_set:
                 for conv_channels in convolutional_channels:
-                    run_experiment(lr, opt, batch, conv_channels)
+                        
+                    experiment_name = f"exp_lr{learning_rate}_opt{optimizer}_bs{batch_size}_ch{conv_channels}"
+                    
+                    # Create a dictionary simulating parsed arguments
+                    config = {
+                        'optimizer_lr': learning_rate,
+                        'batch_size': batch_size,
+                        'model_name': 'custom_convnet',
+                        'optimizer_name': optimizer,
+                        'Conv_Channels': conv_channels,
+                        'dropout_rate': 0.0,
+                        'max_epochs': 10,
+                        'experiment_name': experiment_name,  # Set unique name
+                        'checkpoint_folder_path': False,
+                        'checkpoint_folder_save': f"checkpoints/{experiment_name}/"  # Unique directory
+                    }
+
+                    config.update({
+                        'train_data_dir': os.path.join(data_dir, 'train'),
+                        'val_data_dir': os.path.join(data_dir, 'val'),
+                        'test_data_dir': os.path.join(data_dir, 'test'),
+                        'bin': 'models/'
+                    })
+
+                    os.makedirs(config['checkpoint_folder_save'], exist_ok=True)
+                    run(config)
