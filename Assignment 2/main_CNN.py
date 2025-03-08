@@ -191,7 +191,7 @@ def run(config):
     # test model
     trainer = pl.Trainer()
     trainer.test(model, dataloaders=test_data, verbose=True)
-"""
+
 if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
@@ -231,6 +231,7 @@ if __name__ == '__main__':
 
     run(config)
     # Feel free to add any additional functions, such as plotting of the loss curve here
+    
 """
 # hyperparameter sets
 learning_rates = [0.0001, 0.001, 0.01]  
@@ -274,3 +275,4 @@ if __name__ == '__main__':
 
                     os.makedirs(config['checkpoint_folder_save'], exist_ok=True)
                     run(config)
+"""
