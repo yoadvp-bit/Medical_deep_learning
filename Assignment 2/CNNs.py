@@ -98,101 +98,62 @@ class SimpleConvNet(pl.LightningModule):
 
 
 class UNet(pl.LightningModule):
-    def __init__(self, n_classes=1, in_ch=3):
-        super().__init__()
-        #######################
-        # Start YOUR CODE    #
-        #######################
-        # number of filter's list for each expanding and respecting contracting layer
-        c = [16, 32, 64, 128]
-
-
-        self.encoder = nn.Sequential(
-            # first convolution layer receiving the image
-            nn.Conv2d(in_channels=in_ch, out_channels=c[0], kernel_size=3, padding=1),
-            nn.ReLU(),
-            # encoder layers
-            nn.Conv2d(in_channels=c[0], out_channels=c[1], kernel_size=3, padding=1),
-            nn.Conv2d(in_channels=c[1], out_channels=c[1], kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(in_channels=c[1], out_channels=c[2], kernel_size=3, padding=1),
-            nn.Conv2d(in_channels=c[2], out_channels=c[2], kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(in_channels=c[2], out_channels=c[3], kernel_size=3, padding=1),
-            nn.Conv2d(in_channels=c[3], out_channels=c[3], kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2))
-        self.decoder = nn.Sequential(
-            # decoder layers
-            nn.Conv2d(in_channels=c[3], out_channels=c[2], kernel_size=3, padding=1),
-            nn.Conv2d(in_channels=c[2], out_channels=c[2], kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d(in_channels=c[2], out_channels=c[1], kernel_size=3, padding=1),
-            nn.Conv2d(in_channels=c[1], out_channels=c[1], kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Upsample(scale_factor=2, mode='bilinear'),
-            nn.Conv2d(in_channels=c[1], out_channels=c[0], kernel_size=3, padding=1),
-            nn.Conv2d(in_channels=c[0], out_channels=c[0], kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Upsample(scale_factor=2, mode='bilinear'),
-            # last layer returning the output
-            nn.Conv2d(in_channels=c[0], out_channels=n_classes, kernel_size=1)
-            )
-        #######################
-        # END OF YOUR CODE    #
-        #######################
-    def forward(self,x):
-        #######################
-        # Start YOUR CODE    #
-        #######################
-        # encoder
-        x = self.encoder(x)    
-        # decoder
-        x = self.decoder(x)
-        #######################
-        # END OF YOUR CODE    #
-        #######################
-        return x
-
-
-def conv3x3_bn(ci, co):
-    #######################
-    # Start YOUR CODE    #
-    #######################
-    return nn.Conv2d(in_channels=ci, out_channels=co, kernel_size=3, padding=1),
-    #######################
-    # end YOUR CODE    #
-    #######################
-
-def encoder_conv(ci, co):
-    #######################
-    # Start YOUR CODE    #
-    #######################
-    pass
-    #######################
-    # end YOUR CODE    #
-    #######################
-
-class deconv(nn.Module):
-  def __init__(self, ci, co):
-    super(deconv, self).__init__()
-    #######################
-    # Start YOUR CODE    #
-    #######################
-    pass
-    #######################
-    # end YOUR CODE    #
-    #######################
-
-  def forward(self, x1, x2):
+  def __init__(self, n_classes=1, in_ch=3):
+      super().__init__()
       #######################
       # Start YOUR CODE    #
       #######################
-      x=x1
+      # number of filter's list for each expanding and respecting contracting layer
+      c = [16, 32, 64, 128]
+
+      # first convolution layer receiving the image
+      # encoder layers
+
+      # decoder layers
+
+      # last layer returning the output
       #######################
-      # end YOUR CODE    #
+      # END OF YOUR CODE    #
+      #######################
+  def forward(self,x):
+      #######################
+      # Start YOUR CODE    #
+      #######################
+      # encoder
+
+      # decoder
+
+      #######################
+      # END OF YOUR CODE    #
       #######################
       return x
+ 
+
+
+def conv3x3_bn(ci, co):
+    return nn.Sequential(
+        nn.Conv2d(in_channels=ci, out_channels=co, kernel_size=3, padding=1),
+        nn.BatchNorm2d(co),
+        nn.ReLU(inplace=True)
+    )
+
+def encoder_conv(ci, co):
+    return nn.Sequential(
+        conv3x3_bn(ci, co),
+        conv3x3_bn(co, co),
+        nn.MaxPool2d(2, 2)
+    )
+
+class deconv(nn.Module):
+    def __init__(self, ci, co):
+        super(deconv, self).__init__()
+        self.up = nn.ConvTranspose2d(ci, co, kernel_size=2, stride=2)
+        self.conv = nn.Sequential(
+                conv3x3_bn(co, co),
+                conv3x3_bn(co, co)
+        )
+        
+    def forward(self, x1, x2):
+        x1 = self.up(x1)
+        x = torch.cat([x1, x2], dim=1)  
+        return self.conv(x)
