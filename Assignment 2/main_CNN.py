@@ -73,7 +73,7 @@ show_data(dataset,index,n_images_display=5)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 torch.device(device)
 
-models = {'custom_convnet': lambda: SimpleConvNet(conv_channels=config['Conv_Channels'], dropout_rate=0)}
+models = {'custom_convnet': lambda: SimpleConvNet(conv_channels=config['conv_channels'], dropout_rate=config['dropout_rate'], use_residuals=config['use_residuals'])}
 
 optimizers = {'adam': torch.optim.Adam,
               'sgd': torch.optim.SGD}
@@ -146,9 +146,6 @@ class Classifier(pl.LightningModule):
         epoch_dictionary = {'loss': avg_loss, 'log': {'loss': avg_loss}}
         return epoch_dictionary
 
-
-
-
     def test_step(self, batch, batch_idx):
         self.step(batch, 'test')
 
@@ -204,10 +201,12 @@ if __name__ == '__main__':
                         help='defines model to use')
     parser.add_argument('--optimizer_name', default='sgd', type=str,
                         help='optimizer options: adam and sgd (default)')
+    parser.add_argument('--use_residuals', default=False, type=bool,
+                        help='use residual blocks')
     def parse_conv_channels(channels):
         return [int(x) for x in channels.split(',')]
     
-    parser.add_argument('--Conv_Channels', default='16,32', type=parse_conv_channels,
+    parser.add_argument('--conv_channels', default='16,32', type=parse_conv_channels,
                         help='Convolutional channels for first and second layer: comma-separated integers, e.g., "16,32"')
     parser.add_argument('--dropout_rate', default=0, type=float,
                         help='dropout rate')
@@ -229,9 +228,22 @@ if __name__ == '__main__':
         'test_data_dir': os.path.join(data_dir, 'test'),
         'bin': 'models/'})
 
+        # Initialize wandb
+    wandb.init(project="ISIC", config={
+        "lr": config['optimizer_lr'],
+        "batch_size": config['batch_size'],
+        "epochs": config['max_epochs'],
+        "conv_channels": config['conv_channels'],
+        "dropout_rate": config['dropout_rate'],
+        "experiment_name": config['experiment_name'],
+        "optimizer": config['optimizer_name'],
+        "use_residuals": config['use_residuals']
+    },
+    name=config['experiment_name'])
+
     run(config)
     # Feel free to add any additional functions, such as plotting of the loss curve here
-    
+
 """
 # hyperparameter sets
 learning_rates = [0.0001, 0.001, 0.01]  
@@ -257,7 +269,7 @@ if __name__ == '__main__':
                         'batch_size': batch_size,
                         'model_name': 'custom_convnet',
                         'optimizer_name': optimizer,
-                        'Conv_Channels': conv_channels,
+                        'conv_channels': conv_channels,
                         'dropout_rate': 0.0,
                         'max_epochs': 4,
                         'experiment_name': experiment_name,  # Set unique name
