@@ -98,37 +98,45 @@ class SimpleConvNet(pl.LightningModule):
 
 
 class UNet(pl.LightningModule):
-  def __init__(self, n_classes=1, in_ch=3):
-      super().__init__()
-      #######################
-      # Start YOUR CODE    #
-      #######################
-      # number of filter's list for each expanding and respecting contracting layer
-      c = [16, 32, 64, 128]
+    def __init__(self, n_classes=1, in_ch=3):
+        super().__init__()
+        c = [16, 32, 64, 128]
 
-      # first convolution layer receiving the image
-      # encoder layers
+        self.conv1 = encoder_conv(in_ch, c[0])
+        self.conv2 = encoder_conv(c[0], c[1])
+        self.conv3 = encoder_conv(c[1], c[2])
+        self.conv4 = encoder_conv(c[2], c[3])
 
-      # decoder layers
+        self.bottleneck = nn.Sequential(
+            conv3x3_bn(c[3], c[3]),
+            conv3x3_bn(c[3], c[3])
+        )
 
-      # last layer returning the output
-      #######################
-      # END OF YOUR CODE    #
-      #######################
-  def forward(self,x):
-      #######################
-      # Start YOUR CODE    #
-      #######################
-      # encoder
+        self.upconv4 = deconv(c[3], c[2])
+        self.upconv3 = deconv(c[2], c[1])
+        self.upconv2 = deconv(c[1], c[0])
+        self.upconv1 = deconv(c[0], c[0])
 
-      # decoder
+        self.last = nn.Conv2d(c[0], n_classes, kernel_size=1)
 
-      #######################
-      # END OF YOUR CODE    #
-      #######################
-      return x
- 
 
+    def forward(self,x):
+        x1 = self.conv1(x) 
+        x2 = self.conv2(x1)  
+        x3 = self.conv3(x2)  
+        x4 = self.conv4(x3) 
+
+        # bottleneck
+        x_b = self.bottleneck(x4)  # shape: (batch, 128, H/8, W/8)
+
+        x = self.upconv4(x_b, x3)  
+        x = self.upconv3(x, x2) 
+        x = self.upconv2(x, x1) 
+        x = self.upconv1(x, x) 
+
+        x = self.last(x)  # shape: (batch, n_classes, H, W)
+
+        return x
 
 def conv3x3_bn(ci, co):
     return nn.Sequential(
