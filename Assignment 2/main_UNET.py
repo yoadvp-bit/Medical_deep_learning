@@ -149,7 +149,7 @@ def run(config_segm):
     logger = WandbLogger(name=config_segm['experiment_name'], project='ISIC-Unet')
     data = Scan_DataModule_Segm(config_segm)
     segmenter = Segmenter(config_segm)
-    checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath=config_segm['checkpoint_folder_save'],monitor='val_f1')
+    checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath=config_segm['checkpoint_folder_save'],monitor='val_f1', model='max')
     trainer = pl.Trainer(max_epochs=config_segm['max_epochs'],
                          logger=logger, callbacks=[checkpoint_callback],
                          default_root_dir=config_segm['bin'],
