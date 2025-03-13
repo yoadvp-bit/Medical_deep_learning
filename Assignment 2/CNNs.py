@@ -115,7 +115,7 @@ class UNet(pl.LightningModule):
         self.upconv4 = deconv(c[3], c[2])
         self.upconv3 = deconv(c[2], c[1])
         self.upconv2 = deconv(c[1], c[0])
-        self.upconv1 = deconv(c[0], c[0])
+        self.upconv1 = deconv(c[0], c[0], use_skip=False)    
 
         self.last = nn.Conv2d(c[0], n_classes, kernel_size=1)
 
@@ -132,7 +132,7 @@ class UNet(pl.LightningModule):
         x = self.upconv4(x_b, x3)  
         x = self.upconv3(x, x2) 
         x = self.upconv2(x, x1) 
-        x = self.upconv1(x, x) 
+        x = self.upconv1(x) 
 
         x = self.last(x)  # shape: (batch, n_classes, H, W)
 
@@ -153,15 +153,19 @@ def encoder_conv(ci, co):
     )
 
 class deconv(nn.Module):
-    def __init__(self, ci, co):
+    def __init__(self, ci, co, use_skip=True):
         super(deconv, self).__init__()
+        self.use_skip = use_skip
         self.up = nn.ConvTranspose2d(ci, co, kernel_size=2, stride=2)
         self.conv = nn.Sequential(
-                conv3x3_bn(co, co),
-                conv3x3_bn(co, co)
+            conv3x3_bn(co * 2 if use_skip else co, co),  # Handle skip connections
+            conv3x3_bn(co, co)
         )
-        
-    def forward(self, x1, x2):
+
+    def forward(self, x1, x2=None):
         x1 = self.up(x1)
-        x = torch.cat([x1, x2], dim=1)  
+        if self.use_skip and x2 is not None:
+            x = torch.cat([x1, x2], dim=1)
+        else:
+            x = x1
         return self.conv(x)

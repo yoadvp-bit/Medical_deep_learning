@@ -132,7 +132,7 @@ class Segmenter(pl.LightningModule):
             self.counter = self.counter+1
         batch_dictionary = {'loss': loss}
         self.log_dict(batch_dictionary)
-
+    
 
     def test_step(self, batch, batch_idx):
         self.step(batch, 'test')
@@ -149,7 +149,7 @@ def run(config_segm):
     logger = WandbLogger(name=config_segm['experiment_name'], project='ISIC-Unet')
     data = Scan_DataModule_Segm(config_segm)
     segmenter = Segmenter(config_segm)
-    checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath=config_segm['checkpoint_folder_save'],monitor='val_f1', model='max')
+    checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath=config_segm['checkpoint_folder_save'],monitor='val_f1', mode='max')
     trainer = pl.Trainer(max_epochs=config_segm['max_epochs'],
                          logger=logger, callbacks=[checkpoint_callback],
                          default_root_dir=config_segm['bin'],
