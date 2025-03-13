@@ -98,9 +98,9 @@ class SimpleConvNet(pl.LightningModule):
 
 
 class UNet(pl.LightningModule):
-    def __init__(self, n_classes=1, in_ch=3, c=[16, 32, 64, 128]):
+    def __init__(self, n_classes=1, in_ch=3, channels=[16, 32, 64, 128]):
         super().__init__()
-        self.c = c
+        self.c = channels
 
         self.encoders = nn.ModuleList([encoder_conv(in_ch, self.c[0])])
         self.encoders.extend([encoder_conv(self.c[i], self.c[i + 1]) for i in range(len(self.c) - 1)])
@@ -113,7 +113,7 @@ class UNet(pl.LightningModule):
         self.decoders = nn.ModuleList([deconv(self.c[i], self.c[i - 1]) for i in range(len(self.c) - 1, 0, -1)])
         self.decoders.append(deconv(self.c[0], self.c[0], use_skip=False))
 
-        self.last = nn.Conv2d(self.c[0], n_classes[0], kernel_size=1)
+        self.last = nn.Conv2d(self.c[0], n_classes, kernel_size=1)
 
     def forward(self, x):
         encoder_outputs = []
@@ -124,7 +124,7 @@ class UNet(pl.LightningModule):
         x = self.bottleneck(x)
 
         for i, decoder in enumerate(self.decoders):
-            x = decoder(x, encoder_outputs[-(i + 1)] if i < len(encoder_outputs) else None)
+            x = decoder(x, encoder_outputs[-(i + 2)] if i < (len(encoder_outputs)-1) else None)
 
         x = self.last(x)
         return x

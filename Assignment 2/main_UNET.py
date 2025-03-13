@@ -69,7 +69,7 @@ torch.device(device)
 print('device is ' + device)
 
 
-models = {'unet': lambda: UNet(conv_channels=config_segm['channels'])}
+models = {'unet': lambda: UNet(channels=config_segm['channels'])}
 
 optimizers = {'adam': torch.optim.Adam,
               'sgd': torch.optim.SGD}
@@ -146,7 +146,11 @@ class Segmenter(pl.LightningModule):
 
 
 def run(config_segm):
-    logger = WandbLogger(name=config_segm['experiment_name'], project='ISIC-Unet')
+    logger = WandbLogger(project='ISIC_Unet', config=config_segm, name=config_segm['experiment_name'])
+
+    # Update wandb config again here
+    logger.experiment.config.update(config_segm, allow_val_change=True)
+
     data = Scan_DataModule_Segm(config_segm)
     segmenter = Segmenter(config_segm)
     checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath=config_segm['checkpoint_folder_save'],monitor='val_f1', mode='max')
@@ -163,7 +167,7 @@ def run(config_segm):
     model.eval()
 
     # make test dataloader
-    test_data = Scan_DataModule_Segm(test_data_dir)
+    test_data = Scan_DataModule_Segm(config_segm)
 
     # test model
     trainer = pl.Trainer()
@@ -201,7 +205,7 @@ if __name__ == '__main__':
     def parse_channels(channels):
         return [int(x) for x in channels.split(',')]
 
-    parser.add_argument('--channels', default='16, 32, 64, 128', type=parse_channels,
+    parser.add_argument('--channels', default='16,32,64,128', type=parse_channels,
                         help='Channels for all layers: comma-separated integers, e.g., "16,32"')
     # Other hyperparameters
     parser.add_argument('--max_epochs', default=10, type=int,
@@ -220,6 +224,10 @@ if __name__ == '__main__':
         'test_data_dir': os.path.join(data_dir, 'test'),
         'bin': 'segm_models/',
         'loss_pos_weight': 1})
+    
+    print(config_segm)
 
+    print(wandb.config) 
+ 
     run(config_segm)
     # Feel free to add any additional functions, such as plotting of the loss curve here

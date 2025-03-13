@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=gpu_mig
+#SBATCH --partition=gpu
 #SBATCH --gpus=1
 #SBATCH --job-name=HyperparamSweep
 #SBATCH --ntasks=1
@@ -16,26 +16,26 @@ cd $HOME/AI_for_medical_imaging_course/Assignment\ 2
 source /gpfs/work5/0/prjs1312/venv2/bin/activate
 
 # Define hyperparameter values
-learning_rates=(0.0001, 0.001, 0.01)
+optimizer_lr=(0.01, 0.1, 1.0)
 batch_sizes=(32, 64)
 epochs=(15)
-channels=("16,32,64,128", "32,64,128,256", "16,32,64,128,256,512")
+conv_channels=("16,32,64,128", "32,64,128,256", "16,32,64,128,256,512")
 optimizers=("adam")
 
 # Run all hyperparameter combinations sequentially
-for lr in "${learning_rates[@]}"; do
+for lr in "${optimizer_lr[@]}"; do
     for batch_size in "${batch_sizes[@]}"; do
         for epoch in "${epochs[@]}"; do
-            for channels in "${channels[@]}"; do
+            for channels in "${conv_channels[@]}"; do
                 for optimizer in "${optimizers[@]}"; do
                     echo "Running: lr=$lr, batch_size=$batch_size, epochs=$epoch, channels=$channels,  optimizer=$optimizer"
-                    srun python -u main_UNET.py --checkpoint_folder_save checkpoints/${optimizer_name}_lr${optimizer_lr}_bs${batch_size}_ch${channels}/
+                    srun python -u main_UNET.py --checkpoint_folder_save checkpoints/${optimizer}_lr${lr}_bs${batch_size}_ch${channels}/
                                             --optimizer_lr $lr \
                                             --batch_size $batch_size \
                                             --max_epochs $epoch \
                                             --channels $channels \
                                             --optimizer_name $optimizer \
-                                            --experiment_name ${optimizer_name}_lr${optimizer_lr}_bs${batch_size}_ch${channels}
+                                            --experiment_name ${optimizer}_lr${lr}_bs${batch_size}_ch${channels}
                     sleep 5  # Small delay to avoid overwhelming the scheduler
                 done
             done

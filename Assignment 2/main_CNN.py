@@ -228,7 +228,7 @@ if __name__ == '__main__':
         'test_data_dir': os.path.join(data_dir, 'test'),
         'bin': 'models/'})
 
-        # Initialize wandb
+    # Initialize wandb
     wandb.init(project="ISIC", config={
         "lr": config['optimizer_lr'],
         "batch_size": config['batch_size'],
@@ -243,48 +243,3 @@ if __name__ == '__main__':
 
     run(config)
     # Feel free to add any additional functions, such as plotting of the loss curve here
-
-"""
-# hyperparameter sets
-learning_rates = [0.0001, 0.001, 0.01]  
-optimizer_set = ['adam']
-batch_set = [16, 32, 64]
-convolutional_channels = [[1,2],[16, 32], [32, 64], [64, 128]]
-
-if __name__ == '__main__':
-    for learning_rate in learning_rates:
-        for optimizer in optimizer_set:
-            for batch_size in batch_set:
-                for conv_channels in convolutional_channels:
-                    # wandb.login(relogin=True)
-
-                    # Replace the decimal point in the learning rate with an underscore
-                    learning_rate_str = str(learning_rate).replace('.', '_')
-
-                    experiment_name = f"lr{learning_rate_str}_{optimizer}_bs{batch_size}_ch{conv_channels}"
-                    
-                    # Create a dictionary simulating parsed arguments
-                    config = {
-                        'optimizer_lr': learning_rate,
-                        'batch_size': batch_size,
-                        'model_name': 'custom_convnet',
-                        'optimizer_name': optimizer,
-                        'conv_channels': conv_channels,
-                        'dropout_rate': 0.0,
-                        'max_epochs': 4,
-                        'experiment_name': experiment_name,  # Set unique name
-                        'checkpoint_folder_path': False,
-                        # 'checkpoint_folder_save': f"checkpoints/{experiment_name}/"  # Unique directory
-                        'checkpoint_folder_save': f"checkpoints/" 
-                    }
-
-                    config.update({
-                        'train_data_dir': os.path.join(data_dir, 'train'),
-                        'val_data_dir': os.path.join(data_dir, 'val'),
-                        'test_data_dir': os.path.join(data_dir, 'test'),
-                        'bin': 'models/'
-                    })
-
-                    os.makedirs(config['checkpoint_folder_save'], exist_ok=True)
-                    run(config)
-"""
