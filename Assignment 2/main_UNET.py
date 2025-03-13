@@ -69,7 +69,7 @@ torch.device(device)
 print('device is ' + device)
 
 
-models = {'unet': UNet}
+models = {'unet': lambda: UNet(conv_channels=config_segm['channels'])}
 
 optimizers = {'adam': torch.optim.Adam,
               'sgd': torch.optim.SGD}
@@ -132,7 +132,7 @@ class Segmenter(pl.LightningModule):
             self.counter = self.counter+1
         batch_dictionary = {'loss': loss}
         self.log_dict(batch_dictionary)
-    
+
 
     def test_step(self, batch, batch_idx):
         self.step(batch, 'test')
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
     # Optimizer hyperparameters
-    parser.add_argument('--optimizer_lr', default=0.1, type=float, nargs='+',
+    parser.add_argument('--optimizer_lr', default=0.1, type=float,
                         help='Learning rate to use')
     parser.add_argument('--batch_size', default=32, type=int,
                         help='Minibatch size')
@@ -198,6 +198,11 @@ if __name__ == '__main__':
                         help='defines model to use')
     parser.add_argument('--optimizer_name', default='adam', type=str,
                         help='optimizer options: adam and sgd (default)')
+    def parse_channels(channels):
+        return [int(x) for x in channels.split(',')]
+
+    parser.add_argument('--channels', default='16, 32, 64, 128', type=parse_channels,
+                        help='Channels for all layers: comma-separated integers, e.g., "16,32"')
     # Other hyperparameters
     parser.add_argument('--max_epochs', default=10, type=int,
                         help='Max number of epochs')

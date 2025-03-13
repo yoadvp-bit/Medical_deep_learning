@@ -98,45 +98,55 @@ class SimpleConvNet(pl.LightningModule):
 
 
 class UNet(pl.LightningModule):
-    def __init__(self, n_classes=1, in_ch=3):
+    def __init__(self, n_classes=1, in_ch=3, c=[16, 32, 64, 128]):
         super().__init__()
-        c = [16, 32, 64, 128]
+        self.c = c
 
-        self.conv1 = encoder_conv(in_ch, c[0])
-        self.conv2 = encoder_conv(c[0], c[1])
-        self.conv3 = encoder_conv(c[1], c[2])
-        self.conv4 = encoder_conv(c[2], c[3])
+        self.encoders = nn.ModuleList([encoder_conv(in_ch, self.c[0])])
+        self.encoders.extend([encoder_conv(self.c[i], self.c[i + 1]) for i in range(len(self.c) - 1)])
 
         self.bottleneck = nn.Sequential(
-            conv3x3_bn(c[3], c[3]),
-            conv3x3_bn(c[3], c[3])
+            conv3x3_bn(self.c[-1], self.c[-1]),
+            conv3x3_bn(self.c[-1], self.c[-1])
         )
 
-        self.upconv4 = deconv(c[3], c[2])
-        self.upconv3 = deconv(c[2], c[1])
-        self.upconv2 = deconv(c[1], c[0])
-        self.upconv1 = deconv(c[0], c[0], use_skip=False)    
+        self.decoders = nn.ModuleList([deconv(self.c[i], self.c[i - 1]) for i in range(len(self.c) - 1, 0, -1)])
+        self.decoders.append(deconv(self.c[0], self.c[0], use_skip=False))
 
-        self.last = nn.Conv2d(c[0], n_classes, kernel_size=1)
+        self.last = nn.Conv2d(self.c[0], n_classes[0], kernel_size=1)
 
+    def forward(self, x):
+        encoder_outputs = []
+        for encoder in self.encoders:
+            x = encoder(x)
+            encoder_outputs.append(x)
 
-    def forward(self,x):
-        x1 = self.conv1(x) 
-        x2 = self.conv2(x1)  
-        x3 = self.conv3(x2)  
-        x4 = self.conv4(x3) 
+        x = self.bottleneck(x)
 
-        # bottleneck
-        x_b = self.bottleneck(x4)  # shape: (batch, 128, H/8, W/8)
+        for i, decoder in enumerate(self.decoders):
+            x = decoder(x, encoder_outputs[-(i + 1)] if i < len(encoder_outputs) else None)
 
-        x = self.upconv4(x_b, x3)  
-        x = self.upconv3(x, x2) 
-        x = self.upconv2(x, x1) 
-        x = self.upconv1(x) 
-
-        x = self.last(x)  # shape: (batch, n_classes, H, W)
-
+        x = self.last(x)
         return x
+
+
+    # def forward(self,x):
+    #     x1 = self.conv1(x) 
+    #     x2 = self.conv2(x1)  
+    #     x3 = self.conv3(x2)  
+    #     x4 = self.conv4(x3) 
+
+    #     # bottleneck
+    #     x_b = self.bottleneck(x4)  # shape: (batch, 128, H/8, W/8)
+
+    #     x = self.upconv4(x_b, x3)  
+    #     x = self.upconv3(x, x2) 
+    #     x = self.upconv2(x, x1) 
+    #     x = self.upconv1(x) 
+
+    #     x = self.last(x)  # shape: (batch, n_classes, H, W)
+
+    #     return x
 
 def conv3x3_bn(ci, co):
     return nn.Sequential(
