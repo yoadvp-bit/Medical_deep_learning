@@ -1,0 +1,2 @@
+learning_rate,batch_size,epochs_trained,conv_channels,dropout_rate,optimizer,test_acc,test_f1,test_loss,test_precision,test_recall
+0.0001,32,19,"16,32",0.0,adam,0.7024999856948853,0.6707834601402283,0.5433166027069092,0.7656551599502563,0.6070588231086731
