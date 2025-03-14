@@ -166,10 +166,10 @@ def run(config_segm):
     model = Segmenter.load_from_checkpoint(PATH)
     model.eval()
 
-    # make test dataloader
+    # Make test dataloader
     test_data = Scan_DataModule_Segm(config_segm)
 
-    # test model
+    # Test model
     trainer = pl.Trainer()
     trainer.test(model, dataloaders=test_data, verbose=True)
 

@@ -5,7 +5,7 @@
 #SBATCH --job-name=HyperparamSweep
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=18:00:00  # Increased time limit for more runs
+#SBATCH --time=00:10:00  # Increased time limit for more runs
 #SBATCH --output=slurm_output_%A.out
 
 module purge
@@ -16,26 +16,33 @@ cd $HOME/AI_for_medical_imaging_course/Assignment\ 2
 source /gpfs/work5/0/prjs1312/venv2/bin/activate
 
 # Define hyperparameter values
-optimizer_lr=(0.01, 0.1, 1.0)
+learning_rates=(0.01, 0.1, 1.0)
 batch_sizes=(32, 64)
 epochs=(15)
-conv_channels=("16,32,64,128", "32,64,128,256", "16,32,64,128,256,512")
+channels=("16,32,64,128", "32,64,128,256", "16,32,64,128,256,512")
 optimizers=("adam")
 
+
 # Run all hyperparameter combinations sequentially
-for lr in "${optimizer_lr[@]}"; do
+for lr in "${learning_rates[@]}"; do
     for batch_size in "${batch_sizes[@]}"; do
         for epoch in "${epochs[@]}"; do
-            for channels in "${conv_channels[@]}"; do
+            for ch in "${channels[@]}"; do
                 for optimizer in "${optimizers[@]}"; do
-                    echo "Running: lr=$lr, batch_size=$batch_size, epochs=$epoch, channels=$channels,  optimizer=$optimizer"
-                    srun python -u main_UNET.py --checkpoint_folder_save checkpoints/${optimizer}_lr${lr}_bs${batch_size}_ch${channels}/
-                                            --optimizer_lr $lr \
-                                            --batch_size $batch_size \
-                                            --max_epochs $epoch \
-                                            --channels $channels \
-                                            --optimizer_name $optimizer \
-                                            --experiment_name ${optimizer}_lr${lr}_bs${batch_size}_ch${channels}
+                    experiment_name="${optimizer}_lr${lr}_bs${batch_size}_ch${ch}"
+                    checkpoint_folder="checkpoints/${experiment_name}/"
+
+                    echo "Running: lr=$lr, batch_size=$batch_size, epochs=$epoch, channels=$ch, optimizer=$optimizer"
+                    
+                    srun python -u main_UNET.py \
+                        --checkpoint_folder_save "$checkpoint_folder" \
+                        --optimizer_lr "$lr" \
+                        --batch_size "$batch_size" \
+                        --max_epochs "$epoch" \
+                        --channels "$ch" \
+                        --optimizer_name "$optimizer" \
+                        --experiment_name "$experiment_name"
+
                     sleep 5  # Small delay to avoid overwhelming the scheduler
                 done
             done
