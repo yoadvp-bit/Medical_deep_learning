@@ -69,7 +69,7 @@ torch.device(device)
 print('device is ' + device)
 
 
-models = {'unet': lambda: UNet(channels=config_segm['channels'])}
+models = {'unet': lambda: UNet(channels=config_segm['channels'], use_skip=config_segm['use_skip'])}
 
 optimizers = {'adam': torch.optim.Adam,
               'sgd': torch.optim.SGD}
@@ -202,6 +202,8 @@ if __name__ == '__main__':
                         help='defines model to use')
     parser.add_argument('--optimizer_name', default='adam', type=str,
                         help='optimizer options: adam and sgd (default)')
+    parser.add_argument('--use_skip', default=True, type=bool,
+                        help='use skip connections')
     def parse_channels(channels):
         return [int(x) for x in channels.split(',')]
 

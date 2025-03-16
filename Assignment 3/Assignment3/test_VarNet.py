@@ -96,12 +96,12 @@ def build_args():
 
     # basic args
     # path_config = pathlib.Path("save_model/fastmri_dirs.yaml")
-    path_config = pathlib.Path("/content/gdrive/MyDrive/DL_4_MI/Assigment3/save_model/fastmri_dirs.yaml")
+    path_config = pathlib.Path("/content/gdrive/MyDrive/DL_4_MI/Assigment3/Recon_exercise_2024/save_model/fastmri_dirs.yaml")
     num_gpus = 1
     batch_size = 1
 
     # set defaults based on optional directory config
-    data_path = "/content/gdrive/MyDrive/DL_4_MI/Assigment3/FastMRIdata/"
+    data_path = "/content/gdrive/MyDrive/DL_4_MI/Assigment3/Recon_exercise_2024/FastMRIdata/"
     default_root_dir = fetch_dir("log_path", path_config) / "varnet" / "varnet_demo"
 
     # client arguments
@@ -290,7 +290,7 @@ def evaluate_test_data_qualitatively(datapath, reconpath):
 if __name__ == "__main__":
     # run testing the network
     run_cli()
-    # datapath = 'FastMRIdata/'
+    # datapath = '/projects/0/gpuuva035/reconstruction/'
     # reconpath = 'varnet/varnet_demo/reconstructions/'
     # # quantitativaly evaluate data
     # evaluate_test_data_quantitatively(datapath, reconpath)

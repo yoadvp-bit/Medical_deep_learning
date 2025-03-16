@@ -103,7 +103,7 @@ def build_args():
 
     # set path to logs and saved model
     default_root_dir = fetch_dir("log_path", path_config) / "varnet" / "varnet_demo"
-    data_path = "FastMRIdata/"
+    data_path = "/gpfs/work5/0/prjs1312/Recon_exercise/FastMRIdata/"
 
     parser.add_argument(
         "--mode",
@@ -140,7 +140,7 @@ def build_args():
 
     parser.add_argument(
         "--experiment_name",
-        default='Train_VarNet 2 cascades MC',
+        default='Train_VarNet 2 cascades',
         type=str,
         help="Name of Experiment in WandB",
     )
@@ -199,14 +199,15 @@ def build_args():
 
     args = parser.parse_args()
 
-    # configure checkpointing in checkpoint_dir
-    checkpoint_dir = args.default_root_dir / "checkpoints"
+    # configure checkpointing in checkpoint_dir with timestamp
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    checkpoint_dir = args.default_root_dir / f"checkpoints_{timestamp}"
     if not checkpoint_dir.exists():
         checkpoint_dir.mkdir(parents=True)
 
     args.callbacks = [
         pl.callbacks.ModelCheckpoint(
-            dirpath=args.default_root_dir / "checkpoints",
+            dirpath=checkpoint_dir,
             save_top_k=True,
             verbose=True,
             monitor="validation_loss",
