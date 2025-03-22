@@ -213,7 +213,7 @@ if __name__ == '__main__':
     # Other hyperparameters
     parser.add_argument('--max_epochs', default=10, type=int,
                         help='Max number of epochs')
-    parser.add_argument('--experiment_name', default='test1', type=str,
+    parser.add_argument('--experiment_name', default='Default', type=str,
                         help='name of experiment')
     parser.add_argument('--checkpoint_folder_path', default=False, type=str,
                         help='path of experiment to load')
