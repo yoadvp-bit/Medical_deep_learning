@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 from fastmri.data.mri_data import fetch_dir
 from fastmri.data.subsample import create_mask_for_mask_type
 from fastmri.data.transforms import VarNetDataTransform
-from fastmri.pl_modules import FastMriDataModule, VarNetModule
+from fastmri.pl_modules import FastMriDataModule, MaskyVarNetModule
 import time
 
 import wandb
@@ -29,7 +29,7 @@ def cli_main(args):
     # ------------
     # this creates a k-space mask for transforming input data
     mask = create_mask_for_mask_type(
-        args.mask_type, args.center_fractions, args.accelerations
+        args.mask_type, args.center_fractions, [1]
     )
     # use random masks for train transform, fixed masks for val transform
     train_transform = VarNetDataTransform(mask_func=mask, use_seed=False)
@@ -59,7 +59,7 @@ def cli_main(args):
     # ------------
     # model
     # ------------
-    model = VarNetModule(
+    model = MaskyVarNetModule(
         num_cascades=args.num_cascades,
         pools=args.pools,
         chans=args.chans,
@@ -104,6 +104,7 @@ def build_args():
     # set path to logs and saved model
     default_root_dir = fetch_dir("log_path", path_config) / "varnet" / "varnet_demo"
     data_path = "/gpfs/work5/0/prjs1312/Recon_exercise/FastMRIdata/"
+    # data_path = "C:/Users/jonas/Desktop/Mri_data/"
 
     parser.add_argument(
         "--mode",
@@ -172,7 +173,7 @@ def build_args():
     )
 
     # module config
-    parser = VarNetModule.add_model_specific_args(parser)
+    parser = MaskyVarNetModule.add_model_specific_args(parser)
     args = parser.parse_args()
     parser.set_defaults(
         num_cascades=2,  # number of unrolled iterations
