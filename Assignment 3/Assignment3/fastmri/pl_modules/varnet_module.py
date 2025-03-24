@@ -8,6 +8,7 @@ LICENSE file in the root directory of this source tree.
 from argparse import ArgumentParser
 
 import torch
+import wandb
 
 import fastmri
 from fastmri.data import transforms
@@ -248,8 +249,9 @@ class MaskyVarNetModule(MriModule):
         lr_step_size: int = 40,
         lr_gamma: float = 0.1,
         weight_decay: float = 0.0,
-        mask_slope: float = 10,
+        mask_slope: float = 3,
         mask_sparsity: float = 0.5,
+        thresh_slope: float = 4,
         mask_lr: float = 0.001,
         **kwargs,
     ):
@@ -302,7 +304,7 @@ class MaskyVarNetModule(MriModule):
 
         # Mask generation components
         self.prob_mask = ProbMask(slope=mask_slope)
-        self.threshold_random_mask = ThresholdRandomMask(slope=mask_slope)
+        self.threshold_random_mask = ThresholdRandomMask(slope=thresh_slope)
         self.random_mask = RandomMask()
         self.under_sample = UnderSample()
         self.rescale_prob_map = RescaleProbMap(sparsity=mask_sparsity)
@@ -312,9 +314,19 @@ class MaskyVarNetModule(MriModule):
         # Generate the mask
         prob_map = self.prob_mask(kspace)
         rescaled_prob_map = self.rescale_prob_map(prob_map)
-        random_mask = self.random_mask(kspace)
-        thresholded_mask = self.threshold_random_mask(random_mask, rescaled_prob_map)
+        random_mask = self.random_mask(prob_map)
+        # print("\n rescaled_prob_map: ", rescaled_prob_map, "\n random_mask: ", random_mask)
+        thresholded_mask = self.threshold_random_mask(rescaled_prob_map, random_mask)
+        # print("\n thresholded_mask: ", thresholded_mask)
         undersampled_kspace = self.under_sample(kspace, thresholded_mask)
+        # print("\n undersampled_kspace: ", undersampled_kspace)
+
+        # print("undersampled kspace: ", undersampled_kspace.shape, " thresholded mask: ", thresholded_mask.shape, " prob_map: ", prob_map.shape, " rescaled_prob_map: ", rescaled_prob_map.shape, " random_mask: ", random_mask.shape)
+
+        # Log the thresholded mask as an image
+        self.logger.experiment.log({
+            "thresholded_mask": wandb.Image(thresholded_mask[0,0,:,:,0].cpu().detach().numpy())
+        })
 
         # Apply VarNet
         return self.varnet(undersampled_kspace, thresholded_mask, num_low_frequencies)
@@ -329,6 +341,16 @@ class MaskyVarNetModule(MriModule):
         )
 
         self.log("train_loss", loss)
+
+        # # Perform backward pass to compute gradients
+        # self.manual_backward(loss)
+
+        # # Log gradients for the mask parameters
+        # if self.prob_mask.slope.grad is not None:
+        #     self.logger.experiment.log({"prob_mask.slope_grad": wandb.Histogram(self.prob_mask.slope.grad.cpu().numpy())})
+        # if hasattr(self.prob_mask, 'mult') and self.prob_mask.mult.grad is not None:
+        #     self.logger.experiment.log({"prob_mask.mult_grad": wandb.Histogram(self.prob_mask.mult.grad.cpu().numpy())})
+
 
         return loss
 
@@ -366,6 +388,44 @@ class MaskyVarNetModule(MriModule):
             "slice": batch.slice_num,
             "output": output.cpu().numpy(),
         }
+
+    def configure_optimizers2(self):
+
+        print("Named parameters: ", [name for name, param in self.named_parameters()])
+
+        mask_params = (
+            list(self.prob_mask.parameters()) +
+            list(self.threshold_random_mask.parameters()) +
+            list(self.random_mask.parameters()) +
+            list(self.under_sample.parameters()) +
+            list(self.rescale_prob_map.parameters())
+        )
+        params = [
+            param for name, param in self.named_parameters()
+            if name not in [p[0] for p in self.prob_mask.named_parameters()] and
+            name not in [p[0] for p in self.threshold_random_mask.named_parameters()] and
+            name not in [p[0] for p in self.random_mask.named_parameters()] and
+            name not in [p[0] for p in self.under_sample.named_parameters()] and
+            name not in [p[0] for p in self.rescale_prob_map.named_parameters()]
+        ]
+
+        print(mask_params, params)
+
+        optim = torch.optim.Adam(
+            params, lr=self.lr, weight_decay=self.weight_decay
+        )
+
+        optim_mask = torch.optim.Adam(
+            mask_params, lr=self.mask_lr, weight_decay=self.weight_decay
+        )
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optim, self.lr_step_size, self.lr_gamma
+        )
+        scheduler_mask = torch.optim.lr_scheduler.StepLR(
+            optim_mask, self.lr_step_size, self.lr_gamma
+        )
+
+        return [optim, optim_mask], [scheduler, scheduler_mask]
 
     def configure_optimizers(self):
         optim = torch.optim.Adam(
@@ -445,9 +505,15 @@ class MaskyVarNetModule(MriModule):
         # mask training params
         parser.add_argument(
             "--mask_slope",
-            default=10,
+            default=3,
             type=float,
             help="Slope for the mask training",
+        )
+        parser.add_argument(
+            "--thresh_slope",
+            default=4,
+            type=float,
+            help="Slope for the thresholding of the mask",
         )
         parser.add_argument(
             "--mask_sparsity",

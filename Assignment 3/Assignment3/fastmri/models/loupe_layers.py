@@ -42,10 +42,10 @@ class ProbMask(nn.Module):
     Probability mask layer
     Contains a layer of weights, that is then passed through a sigmoid.
 
-    Modified from Local Linear nn.Module code in https://github.com/adalca/neuron
+    Modified from Local Linear Layer code in https://github.com/adalca/neuron
     """
     
-    def __init__(self, slope=10,
+    def __init__(self, slope=1,
                  initializer=None,
                  **kwargs):
         """
@@ -57,7 +57,7 @@ class ProbMask(nn.Module):
         IN v2, the default initializer is a logit of the uniform [0, 1] distribution,
         which fixes this issue
         """
-        super(ProbMask, self).__init__()  # Ensure this is called first
+        super(ProbMask, self).__init__()
 
         if initializer == None:
             self.initializer = self._logit_slope_random_uniform
@@ -84,7 +84,8 @@ class ProbMask(nn.Module):
             input_shape_h = list(x.shape)
             input_shape_h[-1] = 1
             self.mult = nn.Parameter(self.initializer(input_shape_h[1:])).to(self.device)
-        
+            
+        print("slope: ", self.slope)
         logit_weights = torch.zeros_like(x[..., 0:1]) + self.mult
         return torch.sigmoid(self.slope * logit_weights)
 
@@ -100,12 +101,16 @@ class ThresholdRandomMask(nn.Module):
     
     def __init__(self, slope=12):
         super(ThresholdRandomMask, self).__init__()
-        self.slope = nn.Parameter(torch.tensor(slope, dtype=torch.float32)) if slope is not None else None
+        # self.slope = nn.Parameter(torch.tensor(slope, dtype=torch.float32)) if slope is not None else None
+        self.slope = slope if slope is not None else None
 
     def forward(self, inputs, thresh):
         if self.slope is not None:
-            mask = torch.sigmoid(self.slope * (inputs - thresh))
-            return (mask > 0.5).bool()
+            ######################################## test ########################################
+            # mask = torch.sigmoid(self.slope * (inputs - thresh))
+            # mask = torch.sigmoid(self.slope * (inputs))
+            return torch.sigmoid(self.slope * (inputs - thresh))
+            # return (mask > 0.5).bool()
         else:
             return (inputs > thresh).bool()
 
@@ -119,7 +124,10 @@ class RandomMask(nn.Module):
 
     def forward(self, x):
         input_shape = x.shape
+        with torch.random.fork_rng():
+            torch.manual_seed(torch.randint(0, 2**32 - 1, (1,)).item())
         threshs = torch.rand(input_shape, dtype=torch.float32).to(x.device)
+
         return (0 * x) + threshs
     
 

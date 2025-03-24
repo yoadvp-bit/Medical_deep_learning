@@ -18,6 +18,8 @@ import time
 import wandb
 from pytorch_lightning.loggers import WandbLogger
 
+import matplotlib.pyplot as plt
+
 def cli_main(args):
     pl.seed_everything(args.seed)
 
@@ -31,6 +33,7 @@ def cli_main(args):
     mask = create_mask_for_mask_type(
         args.mask_type, args.center_fractions, [1]
     )
+
     # use random masks for train transform, fixed masks for val transform
     train_transform = VarNetDataTransform(mask_func=mask, use_seed=False)
     val_transform = VarNetDataTransform(mask_func=mask)
@@ -69,6 +72,8 @@ def cli_main(args):
         lr_step_size=args.lr_step_size,
         lr_gamma=args.lr_gamma,
         weight_decay=args.weight_decay,
+        mask_slope=args.mask_slope,
+        mask_sparsity=1/args.accelerations[0]
     )
     # model = model.double()
     # ------------
