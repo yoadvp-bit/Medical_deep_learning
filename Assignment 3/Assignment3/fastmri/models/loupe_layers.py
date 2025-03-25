@@ -46,7 +46,7 @@ class ProbMask(nn.Module):
     """
     
     def __init__(self, slope=1,
-                 initializer=None,
+                 initializer=None, shape=None,
                  **kwargs):
         """
         note that in v1 the initial initializer was uniform in [-A, +A] where A is some scalar.
@@ -67,10 +67,16 @@ class ProbMask(nn.Module):
         # Higher slope means a more step-function-like logistic function
         # note: slope is converted to a tensor so that we can update it 
         #   during training if necessary
-        self.slope = nn.Parameter(torch.tensor(slope, dtype=torch.float32))
+        self.slope = nn.Parameter(torch.abs(torch.tensor(slope, dtype=torch.float32)))
+
+        # Initialize self.mult with a placeholder shape
+        if shape is not None:
+            self.mult = nn.Parameter(self.initializer(shape).to(self.device))
+        else:
+            self.mult = nn.Parameter(torch.empty(1))
 
         
-    def _logit_slope_random_uniform(self, shape, eps=0.01):
+    def _logit_slope_random_uniform(self, shape, eps=0.0001):
         # eps could be very small, or something like eps = 1e-6
         # The idea is how far from the tails to have your initialization.
         x = torch.rand(shape).uniform_(eps, 1.0 - eps).to(self.device)  # [0, 1]
@@ -80,13 +86,23 @@ class ProbMask(nn.Module):
 
     
     def forward(self, x):
-        if not hasattr(self, 'mult'):
+        if self.mult.numel() == 1:
             input_shape_h = list(x.shape)
             input_shape_h[-1] = 1
             self.mult = nn.Parameter(self.initializer(input_shape_h[1:])).to(self.device)
             
-        print("slope: ", self.slope)
+        # print("slope: ", self.slope)
         logit_weights = torch.zeros_like(x[..., 0:1]) + self.mult
+        # if not hasattr(self, 'prev_logit_weights'):
+        #     self.prev_logit_weights = logit_weights.clone()
+        
+        # any_value_changed = not torch.equal(logit_weights, self.prev_logit_weights)
+        # self.prev_logit_weights = logit_weights.clone()
+        
+        # print("Any value changed:", any_value_changed)
+    
+        print("10 logit weights:", logit_weights.flatten()[:10])
+
         return torch.sigmoid(self.slope * logit_weights)
 
     @property
@@ -99,7 +115,7 @@ class ThresholdRandomMask(nn.Module):
     Takes as input the input to be thresholded, and the threshold
     """
     
-    def __init__(self, slope=12):
+    def __init__(self, slope):
         super(ThresholdRandomMask, self).__init__()
         # self.slope = nn.Parameter(torch.tensor(slope, dtype=torch.float32)) if slope is not None else None
         self.slope = slope if slope is not None else None
