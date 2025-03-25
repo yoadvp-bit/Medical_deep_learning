@@ -252,7 +252,7 @@ class MaskyVarNetModule(MriModule):
         mask_slope: float = 3,
         mask_sparsity: float = 0.5,
         thresh_slope: float = 4,
-        mask_lr: float = 0.1,
+        mask_lr: float = 0.001,
         **kwargs,
     ):
         """
@@ -292,6 +292,9 @@ class MaskyVarNetModule(MriModule):
         self.lr_gamma = lr_gamma
         self.weight_decay = weight_decay
         self.mask_lr = mask_lr
+        self.mask_slope = mask_slope
+        self.mask_sparsity = mask_sparsity
+        self.thresh_slope = thresh_slope
 
         self.varnet = VarNet(
             num_cascades=self.num_cascades,
@@ -304,11 +307,11 @@ class MaskyVarNetModule(MriModule):
         self.loss = fastmri.SSIMLoss()
 
         # Mask generation components
-        self.prob_mask = ProbMask(slope=mask_slope, shape=(1,1,184,160,1))
-        self.threshold_random_mask = ThresholdRandomMask(slope=thresh_slope)
+        self.prob_mask = ProbMask(slope=self.mask_slope, shape=(1,1,184,160,1))
+        self.threshold_random_mask = ThresholdRandomMask(slope=self.thresh_slope)
         self.random_mask = RandomMask()
         self.under_sample = UnderSample()
-        self.rescale_prob_map = RescaleProbMap(sparsity=mask_sparsity)
+        self.rescale_prob_map = RescaleProbMap(sparsity=self.mask_sparsity)
 
 
     def forward(self, kspace, num_low_frequencies):
@@ -316,19 +319,40 @@ class MaskyVarNetModule(MriModule):
         prob_map = self.prob_mask(kspace)
         rescaled_prob_map = self.rescale_prob_map(prob_map)
         random_mask = self.random_mask(prob_map)
-        # print("\n rescaled_prob_map: ", rescaled_prob_map, "\n random_mask: ", random_mask)
         thresholded_mask = self.threshold_random_mask(rescaled_prob_map, random_mask)
-        # print("\n thresholded_mask: ", thresholded_mask)
         undersampled_kspace = self.under_sample(kspace, thresholded_mask)
-        # print("\n undersampled_kspace: ", undersampled_kspace)
 
-        print("undersampled kspace: ", undersampled_kspace.shape, " thresholded mask: ", thresholded_mask.shape, " prob_map: ", prob_map.shape, " rescaled_prob_map: ", rescaled_prob_map.shape, " random_mask: ", random_mask.shape)
-
-        # Log the thresholded mask as an image
+        # Log the histogram of the thresholded mask values
         self.logger.experiment.log({
-            "thresholded_mask": wandb.Image(thresholded_mask[0,0,:,:,0].cpu().detach().numpy())
+            "thresholded_mask_histogram": wandb.Histogram(thresholded_mask.cpu().detach().numpy())
         })
-        print("thresholded_mask: ", thresholded_mask.shape)
+
+        # print("undersampled kspace: ", undersampled_kspace.shape, " thresholded mask: ", thresholded_mask.shape, " prob_map: ", prob_map.shape, " rescaled_prob_map: ", rescaled_prob_map.shape, " random_mask: ", random_mask.shape)
+
+        # # Log the thresholded mask as an image
+        # self.logger.experiment.log({
+        #     "thresholded_mask": wandb.Image(thresholded_mask[0,0,:,:,0].cpu().detach().numpy())
+        # })  
+        
+        # # Log the raw mask as an image
+        # self.logger.experiment.log({
+        #     "prob_mask": wandb.Image(prob_map[0,0,:,:,0].cpu().detach().numpy())
+        # })
+
+        # Log the raw mask as an image
+        self.logger.experiment.log({
+            "rescaled_prob_mask": wandb.Image(rescaled_prob_map[0,0,:,:,0].cpu().detach().numpy())
+        })
+
+        # # Log the random mask as an image
+        # self.logger.experiment.log({
+        #     "random_mask": wandb.Image(random_mask[0,0,:,:,0].cpu().detach().numpy())
+        # })
+
+        # # Log the thresholded mask as an image
+        # self.logger.experiment.log({
+        #     "thresholded_mask": wandb.Image(thresholded_mask[0,0,:,:,0].cpu().detach().numpy())
+        # })
 
         # Apply VarNet
         return self.varnet(undersampled_kspace, thresholded_mask, num_low_frequencies)
@@ -455,6 +479,10 @@ class MaskyVarNetModule(MriModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser = MriModule.add_model_specific_args(parser)
 
+        print("Arguments in parser:")
+        for arg in vars(parser.parse_args()):
+            print(f"{arg}: {getattr(parser.parse_args(), arg)}")
+
         # param overwrites
 
         # network params
@@ -525,17 +553,21 @@ class MaskyVarNetModule(MriModule):
             type=float,
             help="Slope for the thresholding of the mask",
         )
-        parser.add_argument(
-            "--mask_sparsity",
-            default=0.5,
-            type=float,
-            help="Sparsity for the mask training",
-        )
+        # parser.add_argument(
+        #     "--mask_sparsity",
+        #     default=0.5,
+        #     type=float,
+        #     help="Sparsity for the mask training",
+        # )
         parser.add_argument(
             "--mask_lr",
-            default=0.1,
+            default=0.001,
             type=float,
             help="Learning rate for the mask training",
         )
+
+        print("Arguments in parser:")
+        for arg in vars(parser.parse_args()):
+            print(f"{arg}: {getattr(parser.parse_args(), arg)}")
 
         return parser

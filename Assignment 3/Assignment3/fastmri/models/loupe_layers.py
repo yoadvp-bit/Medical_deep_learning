@@ -90,16 +90,10 @@ class ProbMask(nn.Module):
             input_shape_h = list(x.shape)
             input_shape_h[-1] = 1
             self.mult = nn.Parameter(self.initializer(input_shape_h[1:])).to(self.device)
-            
-        # print("slope: ", self.slope)
+
         logit_weights = torch.zeros_like(x[..., 0:1]) + self.mult
-        # if not hasattr(self, 'prev_logit_weights'):
-        #     self.prev_logit_weights = logit_weights.clone()
-        
-        # any_value_changed = not torch.equal(logit_weights, self.prev_logit_weights)
-        # self.prev_logit_weights = logit_weights.clone()
-        
-        # print("Any value changed:", any_value_changed)
+
+        print("slope in probmask: ", self.slope)
     
         print("10 logit weights:", logit_weights.flatten()[:10])
 
@@ -121,12 +115,9 @@ class ThresholdRandomMask(nn.Module):
         self.slope = slope if slope is not None else None
 
     def forward(self, inputs, thresh):
+        print("slope in  threshold: ", self.slope)
         if self.slope is not None:
-            ######################################## test ########################################
-            # mask = torch.sigmoid(self.slope * (inputs - thresh))
-            # mask = torch.sigmoid(self.slope * (inputs))
             return torch.sigmoid(self.slope * (inputs - thresh))
-            # return (mask > 0.5).bool()
         else:
             return (inputs > thresh).bool()
 
@@ -145,33 +136,6 @@ class RandomMask(nn.Module):
         threshs = torch.rand(input_shape, dtype=torch.float32).to(x.device)
 
         return (0 * x) + threshs
-    
-
-# class ComplexAbs(nn.Module):
-#     """
-#     Complex Absolute
-
-#     Inputs: [kspace, mask]
-#     """
-
-#     def __init__(self, **kwargs):
-#         super(ComplexAbs, self).__init__(**kwargs)
-
-#     def build(self, input_shape):
-#         super(ComplexAbs, self).build(input_shape)
-
-#     def call(self, inputs):
-#         two_channel = tf.complex(inputs[..., 0], inputs[..., 1])
-#         two_channel = tf.expand_dims(two_channel, -1)
-        
-#         two_channel = tf.abs(two_channel)
-#         two_channel = tf.cast(two_channel, tf.float32)
-#         return two_channel
-
-#     def compute_output_shape(self, input_shape):
-#         list_input_shape = list(input_shape)
-#         list_input_shape[-1] = 1
-#         return tuple(list_input_shape)
 
 
 class UnderSample(nn.Module):
@@ -187,111 +151,3 @@ class UnderSample(nn.Module):
         k_space_i = kspace[..., 1] * mask[..., 0]
         k_space = torch.stack([k_space_r, k_space_i], dim=-1)
         return k_space
-
-
-# class ConcatenateZero(nn.Module):
-#     """
-#     Concatenate input with a zero'ed version of itself
-
-#     Input: tf.float32 of size [batch_size, ..., n]
-#     Output: tf.float32 of size [batch_size, ..., n*2]
-#     """
-
-#     def __init__(self, **kwargs):
-#         super(ConcatenateZero, self).__init__(**kwargs)
-
-#     def build(self, input_shape):
-#         super(ConcatenateZero, self).build(input_shape)
-
-#     def call(self, inputx):
-#         return tf.concat([inputx, inputx*0], -1)
-
-
-#     def compute_output_shape(self, input_shape):
-#         input_shape_list = list(input_shape)
-#         input_shape_list[-1] *= 2
-#         return tuple(input_shape_list)
-
-
-# class FFT(nn.Module):
-#     """
-#     fft layer, assuming the real/imag are input/output via two features
-
-#     Input: tf.float32 of size [batch_size, ..., 2]
-#     Output: tf.float32 of size [batch_size, ..., 2]
-#     """
-
-#     def __init__(self, **kwargs):
-#         super(FFT, self).__init__(**kwargs)
-
-#     def build(self, input_shape):
-#         # some input checking
-#         assert input_shape[-1] == 2, 'input has to have two features'
-#         self.ndims = len(input_shape) - 2
-#         assert self.ndims in [1,2,3], 'only 1D, 2D or 3D supported'
-
-#         # super
-#         super(FFT, self).build(input_shape)
-
-    # def call(self, inputx):
-    #     assert inputx.shape.as_list()[-1] == 2, 'input has to have two features'
-
-    #     # get the right fft
-    #     if self.ndims == 1:
-    #         fft = tf.fft
-    #     elif self.ndims == 2:
-    #         fft = tf.fft2d
-    #     else:
-    #         fft = tf.fft3d
-
-    #     # get fft complex image
-    #     fft_im = fft(tf.complex(inputx[..., 0], inputx[..., 1]))
-
-    #     # go back to two-feature representation
-    #     fft_im = tf.stack([tf.real(fft_im), tf.imag(fft_im)], axis=-1)
-    #     return tf.cast(fft_im, tf.float32)
-
-    # def compute_output_shape(self, input_shape):
-    #     return input_shape
-
-
-# class IFFT(nn.Module):
-#     """
-#     ifft layer, assuming the real/imag are input/output via two features
-
-#     Input: tf.float32 of size [batch_size, ..., 2]
-#     Output: tf.float32 of size [batch_size, ..., 2]
-#     """
-
-#     def __init__(self, **kwargs):
-#         super(IFFT, self).__init__(**kwargs)
-
-#     def build(self, input_shape):
-#         # some input checking
-#         assert input_shape[-1] == 2, 'input has to have two features'
-#         self.ndims = len(input_shape) - 2
-#         assert self.ndims in [1,2,3], 'only 1D, 2D or 3D supported'
-
-#         # super
-#         super(IFFT, self).build(input_shape)
-
-    # def call(self, inputx):
-    #     assert inputx.shape.as_list()[-1] == 2, 'input has to have two features'
-
-    #     # get the right fft
-    #     if self.ndims == 1:
-    #         ifft = tf.ifft
-    #     elif self.ndims == 2:
-    #         ifft = tf.ifft2d
-    #     else:
-    #         ifft = tf.ifft3d
-
-    #     # get ifft complex image
-    #     ifft_im = ifft(tf.complex(inputx[..., 0], inputx[..., 1]))
-
-    #     # go back to two-feature representation
-    #     ifft_im = tf.stack([tf.real(ifft_im), tf.imag(ifft_im)], axis=-1)
-    #     return tf.cast(ifft_im, tf.float32)
-
-    # def compute_output_shape(self, input_shape):
-    #     return input_shape

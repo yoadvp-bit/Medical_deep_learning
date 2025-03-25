@@ -73,7 +73,8 @@ def cli_main(args):
         lr_gamma=args.lr_gamma,
         weight_decay=args.weight_decay,
         mask_slope=args.mask_slope,
-        mask_sparsity=1/args.accelerations[0]
+        mask_sparsity=1/args.accelerations[0],
+        mask_lr=args.mask_lr
     )
     # model = model.double()
     # ------------
@@ -167,6 +168,13 @@ def build_args():
 
     # data config
     parser = FastMriDataModule.add_data_specific_args(parser)
+
+    # module config
+    parser = MaskyVarNetModule.add_model_specific_args(parser)
+
+    # trainer config
+    parser = pl.Trainer.add_argparse_args(parser)
+    
     args = parser.parse_args()
 
     parser.set_defaults(
@@ -177,9 +185,6 @@ def build_args():
         test_path=None,  # path for test split, overwrites data_path
     )
 
-    # module config
-    parser = MaskyVarNetModule.add_model_specific_args(parser)
-    args = parser.parse_args()
     parser.set_defaults(
         num_cascades=2,  # number of unrolled iterations
         pools=4,  # number of pooling layers for U-Net
@@ -190,10 +195,12 @@ def build_args():
         lr_step_size=40,  # epoch at which to decrease learning rate
         lr_gamma=0.1,  # extent to which to decrease learning rate
         weight_decay=0.0,  # weight regularization strength
+        mask_slope=3.0,
+        mask_lr=0.001,
+        mask_sparsity=1/args.accelerations[0],
+        thresh_slope=0.1
     )
 
-    # trainer config
-    parser = pl.Trainer.add_argparse_args(parser)
     parser.set_defaults(
         gpus=num_gpus,  # number of gpus to use
         replace_sampler_ddp=False,  # this is necessary for volume dispatch during val
