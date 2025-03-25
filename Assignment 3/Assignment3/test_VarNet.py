@@ -95,13 +95,14 @@ def build_args():
     parser = ArgumentParser()
 
     # basic args
-    # path_config = pathlib.Path("save_model/fastmri_dirs.yaml")
-    path_config = pathlib.Path("/content/gdrive/MyDrive/DL_4_MI/Assigment3/Recon_exercise_2024/save_model/fastmri_dirs.yaml")
+    path_config = pathlib.Path("save_model/fastmri_dirs.yaml")
+    #path_config = pathlib.Path("/content/gdrive/MyDrive/DL_4_MI/Assigment3/Recon_exercise_2024/save_model/fastmri_dirs.yaml")
     num_gpus = 1
     batch_size = 1
 
     # set defaults based on optional directory config
-    data_path = "/content/gdrive/MyDrive/DL_4_MI/Assigment3/Recon_exercise_2024/FastMRIdata/"
+    #data_path = "/content/gdrive/MyDrive/DL_4_MI/Assigment3/Recon_exercise_2024/FastMRIdata/"
+    data_path = '/projects/prjs1312/Recon_exercise/FastMRIdata/multicoil_test'
     default_root_dir = fetch_dir("log_path", path_config) / "varnet" / "varnet_demo"
 
     # client arguments
