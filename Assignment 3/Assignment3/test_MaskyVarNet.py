@@ -105,6 +105,16 @@ def build_args():
     data_path = '/projects/prjs1312/Recon_exercise/FastMRIdata'
     default_root_dir = fetch_dir("log_path", path_config) / "varnet" / "varnet_demo"
 
+    resume_from_checkpoint = fetch_dir("log_path", path_config) / "varnet" / "varnet_demo" / "checkpoints"
+
+    # addresume_from_checkpoint to args
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        default=resume_from_checkpoint,
+        type=str,
+        help="Path to checkpoint to resume from",
+    )
+
     # client arguments
     parser.add_argument(
         "--mode",
@@ -251,8 +261,8 @@ def center_crop(data, shape):
 
 def fourier_transform(kspace):
     """This function reconstrucs an image using the fourier transform. """
-    dim1 = 0
-    dim2 = 1
+    dim1 = -2
+    dim2 = -1
     # dofftshift and ifftshift because data is spread over four corners
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(kspace, axes=(dim1, dim2)),
                     axes=(dim1, dim2)), axes=(dim1, dim2))

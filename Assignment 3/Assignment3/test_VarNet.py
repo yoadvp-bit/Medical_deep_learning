@@ -251,8 +251,8 @@ def center_crop(data, shape):
 
 def fourier_transform(kspace):
     """This function reconstrucs an image using the fourier transform. """
-    dim1 = 0
-    dim2 = 1
+    dim1 = -2
+    dim2 = -1
     # dofftshift and ifftshift because data is spread over four corners
     image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(kspace, axes=(dim1, dim2)),
                     axes=(dim1, dim2)), axes=(dim1, dim2))
