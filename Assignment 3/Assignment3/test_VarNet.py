@@ -246,53 +246,127 @@ def center_crop(data, shape):
 
     return data[..., w_from:w_to, h_from:h_to]
 
+# fourier transform copied to prevent importing error
 
+def fourier_transform(kspace):
+    """This function reconstrucs an image using the fourier transform. """
+    dim1 = 0
+    dim2 = 1
+    # dofftshift and ifftshift because data is spread over four corners
+    image = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(kspace, axes=(dim1, dim2)),
+                    axes=(dim1, dim2)), axes=(dim1, dim2))
+    return image
 
-def evaluate_test_data_quantitatively(datapath, reconpath):
-    #######################
-    # Start YOUR CODE    #
-    #######################
+def evaluate_test_data_quantitatively(data_dir, recon_dir):
+    gt_files = sorted(pathlib.Path(data_dir).glob('*.h5'))
+    rec_files = sorted(pathlib.Path(recon_dir).glob('*.h5'))
 
-    # load in ground truth and reconstruction images
+    mse_vals = []
+    nmse_vals = []
+    psnr_vals = []
+    ssim_vals = []
+    
+    for gt_path, rec_path in zip(gt_files, rec_files):
+        with h5py.File(gt_path, 'r') as f:
+            gt_img = f['/kspace'][:]
+        with h5py.File(rec_path, 'r') as f:
+            rec_img = f['/reconstruction'][:]
+        
+        gt_img = np.squeeze(gt_img, axis=1)
+        gt_img = center_crop(gt_img, rec_img.shape[1:])
+        
+        gt_img = fourier_transform(gt_img)
+        rec_img = fourier_transform(rec_img)
+        
+        if np.iscomplexobj(gt_img):
+            gt_img = np.abs(gt_img)
+        if np.iscomplexobj(rec_img):
+            rec_img = np.abs(rec_img)
+        
+        mse_vals.append(mse(gt_img, rec_img))
+        nmse_vals.append(nmse(gt_img, rec_img))
+        psnr_vals.append(psnr(gt_img, rec_img))
+        ssim_vals.append(ssim(gt_img, rec_img))
+    
+    print(f"Mean MSE: {np.mean(mse_vals)}")
+    print(f"Mean NMSE: {np.mean(nmse_vals)}")
+    print(f"Mean PSNR: {np.mean(psnr_vals)}")
+    print(f"Mean SSIM: {np.mean(ssim_vals)}")
 
-    # NOTE: Reconstructed image is cropped by the VarNet
-    # the ground truth image still needs to be cropped 
-    # Use: gt = center_crop(gt, recon.shape)
-
-    # quantitative evaluation
-    pass
-
-    #######################
-    # END OF YOUR CODE    #
-    #######################
     return
 
+def store_img(fig, output_path: str):
+    """ Save the figure as a PNG file to the specified path. """
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)  
+    fig.savefig(output_path, bbox_inches='tight', dpi=300)  
+    plt.close(fig)  
 
-def evaluate_test_data_qualitatively(datapath, reconpath):
-    #######################
-    # Start YOUR CODE    #
-    #######################
 
-    # load in ground truth and reconstruction images
+def evaluate_test_data_qualitatively(data_dir, rec_dir, save_dir):
+    gt_list = sorted(pathlib.Path(data_dir).glob('*.h5'))
+    rec_list = sorted(pathlib.Path(rec_dir).glob('*.h5'))
 
-    # NOTE: Reconstructed image is cropped by the VarNet
-    # the ground truth image still needs to be cropped 
-    # Use: gt = center_crop(gt, recon.shape)
+    for gt_file, rec_file in zip(gt_list, rec_list):
+        print(f"Processing: {gt_file.name} and {rec_file.name}")
+        with h5py.File(gt_file, 'r') as file:
+            kspace_data = file['/kspace'][:]
+        with h5py.File(rec_file, 'r') as file:
+            rec_data = file['/reconstruction'][:]
 
-    # qualitative evaluation
-    pass
-    #######################
-    # END OF YOUR CODE    #
-    #######################
+        kspace_data = np.squeeze(kspace_data, axis=1)
+        kspace_data = center_crop(kspace_data, rec_data.shape[1:])
+        gt_img = fourier_transform(kspace_data)
+
+        mag_gt = np.abs(gt_img)
+        mag_rec = np.abs(rec_data)
+
+        mid_slice = mag_gt.shape[0] // 2
+
+        slice_gt_mag = mag_gt[mid_slice]
+        slice_rec_mag = mag_rec[mid_slice]
+
+        slice_gt_phase = np.angle(gt_img[mid_slice])
+        slice_gt_real = np.real(gt_img[mid_slice])
+        slice_gt_imag = np.imag(gt_img[mid_slice])
+
+        slice_rec_phase = np.angle(rec_data[mid_slice])
+        slice_rec_real = np.real(rec_data[mid_slice])
+        slice_rec_imag = np.imag(rec_data[mid_slice])
+
+        fig, axs = plt.subplots(2, 4, figsize=(15, 8))
+
+        axs[0, 0].imshow(slice_gt_mag, cmap='gray')
+        axs[0, 0].set_title('GT Magnitude')
+        axs[0, 1].imshow(slice_gt_phase, cmap='gray')
+        axs[0, 1].set_title('GT Phase')
+        axs[0, 2].imshow(slice_gt_real, cmap='gray')
+        axs[0, 2].set_title('GT Real')
+        axs[0, 3].imshow(slice_gt_imag, cmap='gray')
+        axs[0, 3].set_title('GT Imaginary')
+
+        axs[1, 0].imshow(slice_rec_mag, cmap='gray')
+        axs[1, 0].set_title('Rec Magnitude')
+        axs[1, 1].imshow(slice_rec_phase, cmap='gray')
+        axs[1, 1].set_title('Rec Phase')
+        axs[1, 2].imshow(slice_rec_real, cmap='gray')
+        axs[1, 2].set_title('Rec Real')
+        axs[1, 3].imshow(slice_rec_imag, cmap='gray')
+        axs[1, 3].set_title('Rec Imaginary')
+
+        out_file = os.path.join(save_dir, f"{gt_file.stem}_comparison.png")
+        store_img(fig, out_file)
+        print(f"Saved: {out_file}")
+
     return
-
 
 if __name__ == "__main__":
     # run testing the network
     run_cli()
-    # datapath = '/projects/0/gpuuva035/reconstruction/'
-    # reconpath = 'varnet/varnet_demo/reconstructions/'
+    datapath = '/projects/0/gpuuva035/reconstruction/'
+    reconpath = 'varnet/varnet_demo/reconstructions/'
     # # quantitativaly evaluate data
-    # evaluate_test_data_quantitatively(datapath, reconpath)
+    evaluate_test_data_quantitatively(datapath, reconpath)
     # # qualitatively
-    # evaluate_test_data_qualitatively(datapath, reconpath)
+    evaluate_test_data_qualitatively(datapath, reconpath)
+
+
