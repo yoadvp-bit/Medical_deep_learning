@@ -108,12 +108,13 @@ def build_args():
     resume_from_checkpoint = fetch_dir("log_path", path_config) / "varnet" / "varnet_demo" / "checkpoints"
 
     # addresume_from_checkpoint to args
+    '''
     parser.add_argument(
         "--resume_from_checkpoint",
         default=resume_from_checkpoint,
         type=str,
         help="Path to checkpoint to resume from",
-    )
+    )'''
 
     # client arguments
     parser.add_argument(
@@ -200,6 +201,8 @@ def build_args():
     )
 
     args = parser.parse_args()
+
+    parser.set_defaults(resume_from_checkpoint=resume_from_checkpoint)
 
     # configure checkpointing in checkpoint_dir
     checkpoint_dir = args.default_root_dir / "checkpoints"
