@@ -48,15 +48,6 @@ class ProbMask(nn.Module):
     def __init__(self, slope=1,
                  initializer=None, shape=None,
                  **kwargs):
-        """
-        note that in v1 the initial initializer was uniform in [-A, +A] where A is some scalar.
-        e.g. was RandomUniform(minval=-2.0, maxval=2.0, seed=None),
-        But this is uniform *in the logit space* (since we take sigmoid of this), so probabilities
-        were concentrated a lot in the edges, which led to very slow convergence, I think.
-
-        IN v2, the default initializer is a logit of the uniform [0, 1] distribution,
-        which fixes this issue
-        """
         super(ProbMask, self).__init__()
 
         if initializer == None:
@@ -93,9 +84,9 @@ class ProbMask(nn.Module):
 
         logit_weights = torch.zeros_like(x[..., 0:1]) + self.mult
 
-        print("slope in probmask: ", self.slope)
+        # print("slope in probmask: ", self.slope)
     
-        print("10 logit weights:", logit_weights.flatten()[:10])
+        # print("10 logit weights:", logit_weights.flatten()[:10])
 
         return torch.sigmoid(self.slope * logit_weights)
 
@@ -106,7 +97,7 @@ class ProbMask(nn.Module):
 class ThresholdRandomMask(nn.Module):
     """ 
     Local thresholding layer
-    Takes as input the input to be thresholded, and the threshold
+    Takes as input the input to be thresholded, and the threshold, the threshold can be the random mask
     """
     
     def __init__(self, slope):

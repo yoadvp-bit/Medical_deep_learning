@@ -307,7 +307,7 @@ class MaskyVarNetModule(MriModule):
         self.loss = fastmri.SSIMLoss()
 
         # Mask generation components
-        self.prob_mask = ProbMask(slope=self.mask_slope, shape=(1,1,184,160,1))
+        self.prob_mask = ProbMask(slope=self.mask_slope, shape=(1,1,184,160,1)) # the size of the mask is hardcoded here, I know thats not the proper way to do this but due to the time constraints this is fine for now
         self.threshold_random_mask = ThresholdRandomMask(slope=self.thresh_slope)
         self.random_mask = RandomMask()
         self.under_sample = UnderSample()
