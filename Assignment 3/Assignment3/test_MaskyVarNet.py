@@ -31,7 +31,7 @@ def cli_main(args):
     # ------------
     # this creates a k-space mask for transforming input data
     mask = create_mask_for_mask_type(
-        args.mask_type, args.center_fractions, args.accelerations,
+        args.mask_type, args.center_fractions, [1],
     )
     # mask = create_mask_for_mask_type(
     #     12, args.center_fractions, args.accelerations,

@@ -328,31 +328,32 @@ class MaskyVarNetModule(MriModule):
         })
 
         # print("undersampled kspace: ", undersampled_kspace.shape, " thresholded mask: ", thresholded_mask.shape, " prob_map: ", prob_map.shape, " rescaled_prob_map: ", rescaled_prob_map.shape, " random_mask: ", random_mask.shape)
-
-        # # Log the thresholded mask as an image
-        # self.logger.experiment.log({
-        #     "thresholded_mask": wandb.Image(thresholded_mask[0,0,:,:,0].cpu().detach().numpy())
-        # })  
         
-        # # Log the raw mask as an image
-        # self.logger.experiment.log({
-        #     "prob_mask": wandb.Image(prob_map[0,0,:,:,0].cpu().detach().numpy())
-        # })
+        # Log the raw mask as an image
+        self.logger.experiment.log({
+            "prob_mask": wandb.Image(prob_map[0,0,:,:,0].cpu().detach().numpy())
+        })
 
         # Log the raw mask as an image
         self.logger.experiment.log({
             "rescaled_prob_mask": wandb.Image(rescaled_prob_map[0,0,:,:,0].cpu().detach().numpy())
         })
 
-        # # Log the random mask as an image
-        # self.logger.experiment.log({
-        #     "random_mask": wandb.Image(random_mask[0,0,:,:,0].cpu().detach().numpy())
-        # })
+        # Log the random mask as an image
+        self.logger.experiment.log({
+            "random_mask": wandb.Image(random_mask[0,0,:,:,0].cpu().detach().numpy())
+        })
 
-        # # Log the thresholded mask as an image
-        # self.logger.experiment.log({
-        #     "thresholded_mask": wandb.Image(thresholded_mask[0,0,:,:,0].cpu().detach().numpy())
-        # })
+        # Log the thresholded mask as an image
+        self.logger.experiment.log({
+            "thresholded_mask": wandb.Image(thresholded_mask[0,0,:,:,0].cpu().detach().numpy())
+        })
+
+        # Log the thresholded mask as an image
+        self.logger.experiment.log({
+            "undersampled_kspace": wandb.Image(undersampled_kspace[0,0,:,:,0].cpu().detach().numpy())
+        })
+
 
         # Apply VarNet
         return self.varnet(undersampled_kspace, thresholded_mask, num_low_frequencies)
